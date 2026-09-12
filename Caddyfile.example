@@ -1,0 +1,9 @@
+# Replace the hostname below with your own DDNS hostname.
+game.example-ddns.net {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:3000
+}
+
+# Socket.IO uses the same origin and needs no separate path rule. Caddy forwards
+# WebSocket upgrades automatically. If Caddy is itself a container on the same
+# Docker network, use `reverse_proxy poker-polacco:3000` instead.
