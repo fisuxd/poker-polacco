@@ -1,6 +1,6 @@
 services:
   poker-polacco:
-    build: .
+    image: ghcr.io/fisuxd/poker-polacco:latest
     container_name: poker-polacco
     restart: unless-stopped
     environment:
