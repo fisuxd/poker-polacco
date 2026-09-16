@@ -3,6 +3,7 @@ import { formatBid } from "../../shared/game/bids";
 import { BidBuilder } from "../components/BidBuilder";
 import { Brand } from "../components/Brand";
 import { Cheatsheet } from "../components/Cheatsheet";
+import { LeaveRoomButton } from "../components/LeaveRoomButton";
 import { GameScene } from "../game3d/GameScene";
 import { gameApi } from "../socket/gameSocket";
 import { useGameStore } from "../state/gameStore";
@@ -61,7 +62,10 @@ export function GameScreen() {
       <header className="game-topbar">
         <Brand compact />
         <div className="round-meta"><span>ROOM <strong>{state.roomCode}</strong></span><span>ROUND <strong>{state.roundNumber}</strong></span></div>
-        <button className="ghost-button cheatsheet-button" onClick={() => setCheatsheetOpen(true)}>？ Cheatsheet</button>
+        <div className="game-tools">
+          <button className="ghost-button cheatsheet-button" onClick={() => setCheatsheetOpen(true)}>？ Cheatsheet</button>
+          <LeaveRoomButton />
+        </div>
       </header>
 
       <div className="phase-pill"><span className={isMyTurn ? "live-dot" : "status-dot"} />{phaseMessage}{countdown !== null && state.phase === "BIDDING" && <b className={countdown <= 10 ? "urgent" : ""}>{countdown}s</b>}</div>
@@ -69,7 +73,7 @@ export function GameScreen() {
       <aside className="table-roster" aria-label="Players">
         {state.players.map((player) => (
           <div key={player.id} className={`roster-player ${player.id === state.currentTurnId ? "current" : ""} ${player.eliminated ? "eliminated" : ""}`}>
-            <span>{player.nickname.slice(0, 1).toUpperCase()}</span><div><strong>{player.nickname}{player.id === playerId ? " · YOU" : ""}</strong><small>{player.eliminated ? "ELIMINATED" : `${player.cardCount} CARD${player.cardCount === 1 ? "" : "S"}`}{!player.connected ? " · AWAY" : ""}</small></div>
+            <span>{player.nickname.slice(0, 1).toUpperCase()}</span><div><strong>{player.nickname}{player.id === playerId ? " · YOU" : ""}</strong><small>{player.leftRoom ? "LEFT ROOM" : player.eliminated ? "ELIMINATED" : `${player.cardCount} CARD${player.cardCount === 1 ? "" : "S"}`}{!player.connected && !player.leftRoom ? " · AWAY" : ""}{player.id === state.hostId ? " · HOST" : ""}</small></div>
           </div>
         ))}
       </aside>
@@ -109,6 +113,7 @@ export function GameScreen() {
             <h1>{winner?.nickname ?? "No one"} wins</h1>
             <p>Last player standing after {state.roundNumber} rounds.</p>
             {isHost ? <div className="winner-actions"><button className="primary-button" disabled={busy || state.players.filter((player) => player.connected).length < 2} onClick={() => act(() => gameApi.rematch(state.roomCode))}>Play a rematch</button><button className="ghost-button" disabled={busy} onClick={() => act(() => gameApi.returnLobby(state.roomCode))}>Return to lobby</button></div> : <p className="waiting-copy">Waiting for the host to choose what happens next…</p>}
+            <LeaveRoomButton className="text-button winner-leave-button" />
           </section>
         </div>
       )}

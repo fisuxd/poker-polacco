@@ -21,7 +21,7 @@ function TableContents({ state, privateState }: { state: PublicGameState; privat
       {state.players.map((player) => {
         const anchor = anchors[player.seat];
         const isLocal = player.id === privateState?.playerId;
-        const cards = reveal ? (player.revealedCards ?? []) : isLocal ? (privateState?.cards ?? []) : Array.from({ length: player.cardCount }, () => undefined);
+        const cards = reveal ? (player.revealedCards ?? []) : player.eliminated ? [] : isLocal ? (privateState?.cards ?? []) : Array.from({ length: player.cardCount }, () => undefined);
         const directionLength = Math.hypot(anchor.position[0], anchor.position[2]);
         const towardCenter: [number, number, number] = [-anchor.position[0] / directionLength, 0, -anchor.position[2] / directionLength];
         const cardCenter: [number, number, number] = [anchor.position[0] + towardCenter[0] * 1.25, 0.62, anchor.position[2] + towardCenter[2] * 1.25];

@@ -31,7 +31,9 @@ socket.on("connect", () => {
   const store = useGameStore.getState();
   store.setConnection("connected");
   const session = readSession();
-  if (!session || store.publicState) {
+  // A new transport connection needs a new authenticated server session even
+  // if we still have the old room view on screen after a temporary disconnect.
+  if (!session) {
     store.setReconnecting(false);
     return;
   }

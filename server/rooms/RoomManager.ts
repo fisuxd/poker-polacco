@@ -63,7 +63,7 @@ export class RoomManager {
     // An older socket may disconnect after the same token already reconnected elsewhere.
     if (room.getPlayer(playerId)?.socketId !== socketId) return;
     room.disconnect(playerId, () => {
-      if (room.players.length === 0) {
+      if (!room.hasMembers()) {
         room.destroy();
         this.rooms.delete(code);
         console.log(`[room ${code}] deleted`);
@@ -72,7 +72,7 @@ export class RoomManager {
   }
 
   removeEmptyRoom(room: GameRoom): void {
-    if (room.players.length === 0) {
+    if (!room.hasMembers()) {
       room.destroy();
       this.rooms.delete(room.code);
     }

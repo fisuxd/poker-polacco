@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Brand } from "../components/Brand";
+import { LeaveRoomButton } from "../components/LeaveRoomButton";
 import { gameApi } from "../socket/gameSocket";
 import { useGameStore } from "../state/gameStore";
 
@@ -52,7 +53,7 @@ export function LobbyScreen() {
               {state.players.length < 2 ? "Waiting for one more player" : "Deal the cards"}
             </button>
           ) : <p className="waiting-copy">The host will start when everyone is ready.</p>}
-          <button className="text-button leave-button" disabled={busy} onClick={() => act(() => gameApi.leave(state.roomCode))}>Leave table</button>
+          <LeaveRoomButton className="ghost-button leave-room-button lobby-leave-button full-width" />
         </div>
       </section>
     </main>

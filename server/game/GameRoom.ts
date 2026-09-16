@@ -26,6 +26,7 @@ export interface RoomPlayer {
   cards: Card[];
   connected: boolean;
   eliminated: boolean;
+  leftRoom: boolean;
   reconnectToken: string;
   socketId: string | null;
   disconnectTimer: NodeJS.Timeout | null;
@@ -77,6 +78,7 @@ export class GameRoom {
       cards: [],
       connected: true,
       eliminated: false,
+      leftRoom: false,
       reconnectToken: randomBytes(24).toString("hex"),
       socketId,
       disconnectTimer: null,
@@ -109,7 +111,11 @@ export class GameRoom {
   }
 
   getPlayerByToken(token: string): RoomPlayer | undefined {
-    return this.players.find((player) => player.reconnectToken === token);
+    return this.players.find((player) => !player.leftRoom && player.reconnectToken === token);
+  }
+
+  hasMembers(): boolean {
+    return this.players.some((player) => !player.leftRoom);
   }
 
   reconnect(player: RoomPlayer, socketId: string): void {
@@ -137,34 +143,56 @@ export class GameRoom {
   }
 
   removeFromLobby(playerId: string): void {
-    if (this.phase !== "LOBBY") throw new Error("A running match cannot be left directly; close the tab to use reconnect protection.");
+    if (this.phase !== "LOBBY") throw new Error("The room is not in the lobby.");
     const player = this.getPlayer(playerId);
     if (!player) return;
     if (player.disconnectTimer) clearTimeout(player.disconnectTimer);
     this.players = this.players.filter((candidate) => candidate.id !== playerId);
+    this.transferHostIfNeeded(player.seat);
     this.players.forEach((candidate, index) => { candidate.seat = index; });
-    if (this.hostId === playerId && this.players.length > 0) this.hostId = this.players[0].id;
     this.log(`${player.nickname} left`);
     this.notify();
   }
 
   expireDisconnectedPlayer(playerId: string): void {
     const player = this.getPlayer(playerId);
-    if (!player || player.connected) return;
+    if (!player || player.connected || player.leftRoom) return;
+    this.log(`${player.nickname} left after reconnect timeout`);
+    this.leaveRoom(playerId);
+  }
+
+  leaveRoom(playerId: string): void {
+    const player = this.getPlayer(playerId);
+    if (!player || player.leftRoom) throw new Error("You are no longer a member of this room.");
     if (this.phase === "LOBBY") {
       this.removeFromLobby(playerId);
       return;
     }
-    if (!player.eliminated) {
-      player.eliminated = true;
-      player.cards = [];
-      this.log(`${player.nickname} forfeited after reconnect timeout`);
+
+    const wasActive = !player.eliminated;
+    if (player.disconnectTimer) clearTimeout(player.disconnectTimer);
+    player.disconnectTimer = null;
+    player.leftRoom = true;
+    player.connected = false;
+    player.eliminated = true;
+    player.socketId = null;
+    player.reconnectToken = "";
+    // Keep the seat and nickname for match history, and keep already revealed
+    // cards until the next deal so leaving cannot erase the challenge evidence.
+    if (this.phase === "BIDDING" || this.phase === "ROUND_START") player.cards = [];
+    this.transferHostIfNeeded(player.seat);
+    this.log(`${player.nickname} left${wasActive && this.phase !== "MATCH_OVER" ? " and forfeited" : ""}`);
+
+    if (this.phase === "MATCH_OVER") {
+      this.notify();
+      return;
     }
-    this.ensureConnectedHost();
     const active = this.activePlayers();
     if (active.length <= 1) {
       this.finishMatch(active[0]?.id ?? null);
-    } else if (this.phase === "BIDDING") {
+    } else if (wasActive && (this.phase === "BIDDING" || this.phase === "ROUND_START")) {
+      // Restart only an unfinished round: the departed hand was part of the
+      // claimed pool, so preserving its current bid would change the rules.
       const next = this.nextActiveAfter(player.seat);
       this.beginRound(next?.id ?? active[0].id);
     } else {
@@ -172,17 +200,23 @@ export class GameRoom {
     }
   }
 
-  private ensureConnectedHost(): void {
+  private transferHostIfNeeded(previousSeat: number): void {
     const currentHost = this.getPlayer(this.hostId);
-    if (currentHost?.connected) return;
-    const replacement = this.players.find((player) => player.connected);
-    if (replacement) this.hostId = replacement.id;
+    if (currentHost && !currentHost.leftRoom) return;
+    const remaining = this.players.filter((player) => !player.leftRoom).sort((a, b) => a.seat - b.seat);
+    const connected = remaining.filter((player) => player.connected);
+    const candidates = connected.length > 0 ? connected : remaining;
+    const replacement = candidates.find((player) => player.seat > previousSeat) ?? candidates[0];
+    if (replacement) {
+      this.hostId = replacement.id;
+      this.log(`${replacement.nickname} is now the host`);
+    }
   }
 
   startMatch(requesterId: string): void {
     if (requesterId !== this.hostId) throw new Error("Only the host can start the game.");
     if (this.phase !== "LOBBY" && this.phase !== "MATCH_OVER") throw new Error("The match has already started.");
-    const connectedPlayers = this.players.filter((player) => player.connected);
+    const connectedPlayers = this.players.filter((player) => player.connected && !player.leftRoom);
     if (connectedPlayers.length < 2) throw new Error("At least two connected players are required.");
     this.clearTimers();
     this.players = connectedPlayers;
@@ -191,6 +225,7 @@ export class GameRoom {
       player.cardCount = 1;
       player.cards = [];
       player.eliminated = false;
+      player.leftRoom = false;
     });
     this.roundNumber = 0;
     this.winnerId = null;
@@ -204,12 +239,13 @@ export class GameRoom {
     if (requesterId !== this.hostId) throw new Error("Only the host can return to the lobby.");
     if (this.phase !== "MATCH_OVER") throw new Error("The match is not over.");
     this.clearTimers();
-    this.players = this.players.filter((player) => player.connected);
+    this.players = this.players.filter((player) => player.connected && !player.leftRoom);
     this.players.forEach((player, seat) => {
       player.seat = seat;
       player.cardCount = 1;
       player.cards = [];
       player.eliminated = false;
+      player.leftRoom = false;
     });
     this.phase = "LOBBY";
     this.currentBid = null;
@@ -393,6 +429,7 @@ export class GameRoom {
         cardCount: player.cardCount,
         connected: player.connected,
         eliminated: player.eliminated,
+        leftRoom: player.leftRoom,
         ...(revealCards ? { revealedCards: player.cards } : {}),
       }));
     return {

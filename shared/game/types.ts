@@ -10,6 +10,7 @@ export interface PublicPlayer {
   cardCount: number;
   connected: boolean;
   eliminated: boolean;
+  leftRoom: boolean;
   revealedCards?: Card[];
 }
 

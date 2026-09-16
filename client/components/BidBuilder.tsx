@@ -9,6 +9,7 @@ import {
   type BidCategory,
 } from "../../shared/game/bids";
 import type { PublicGameState } from "../../shared/game/types";
+import { FullHouseSelector, type FullHouseBid } from "./FullHouseSelector";
 
 export function BidBuilder({ state, onClose, onSubmit, busy }: {
   state: PublicGameState;
@@ -51,12 +52,18 @@ export function BidBuilder({ state, onClose, onSubmit, busy }: {
         </div>
         {selected ? (
           <>
-            <label className="bid-choice">
+            {selected.type === "FULL_HOUSE" ? (
+              <FullHouseSelector
+                legalBids={options.filter((bid): bid is FullHouseBid => bid.type === "FULL_HOUSE")}
+                selected={selected}
+                onChange={(bid) => setSelectedIndex(options.indexOf(bid))}
+              />
+            ) : <label className="bid-choice">
               <span>Choose the exact declaration</span>
               <select value={selectedIndex} onChange={(event) => setSelectedIndex(Number(event.target.value))}>
                 {options.map((bid, index) => <option key={JSON.stringify(bid)} value={index}>{formatBid(bid)}</option>)}
               </select>
-            </label>
+            </label>}
             <div className="declaration-preview"><span>You are declaring</span><strong>{formatBid(selected)}</strong></div>
             <button className="primary-button full-width" disabled={busy} onClick={() => onSubmit(selected)}>{busy ? "Declaring…" : `Declare ${formatBid(selected)}`}</button>
           </>

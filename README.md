@@ -84,6 +84,8 @@ All incoming room codes, nicknames, reconnect tokens, and bids are validated. Me
 
 Rooms and reconnect tokens exist only in memory. Restarting the app intentionally clears active matches.
 
+The Leave room button is available in the lobby, during a match, and after the result. Leaving during a match immediately forfeits that player's seat; temporary connection loss still uses the reconnect grace period. When the host leaves, ownership passes clockwise to the next connected room member. An unfinished round is redealt after an active player leaves because the combined hidden-card pool has changed. Completed challenge results are preserved. Departed seats stay fixed for the rest of the match and are removed for a rematch or return to the lobby.
+
 ## Replacing the placeholder art
 
 The replaceable boundaries are:

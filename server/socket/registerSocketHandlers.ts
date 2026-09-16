@@ -38,6 +38,8 @@ export function registerSocketHandlers(io: Server, manager: RoomManager): void {
 
     const requireSession = (roomCode: string): Session => {
       if (!session || session.roomCode !== roomCode) throw new Error("You are not a member of this room.");
+      const player = manager.getRoom(roomCode)?.getPlayer(session.playerId);
+      if (!player || player.leftRoom || player.socketId !== socket.id) throw new Error("Your room session is no longer active.");
       return session;
     };
 
@@ -86,13 +88,14 @@ export function registerSocketHandlers(io: Server, manager: RoomManager): void {
     });
 
     socket.on("room:leave", (payload: unknown, ack: Ack<ActionResponse>) => {
+      if (rateLimited()) return ack({ ok: false, error: "Too many requests. Please slow down." });
       const parsed = roomActionSchema.safeParse(payload);
       if (!parsed.success) return ack({ ok: false, error: "Invalid room." });
       try {
         const current = requireSession(parsed.data.roomCode);
         const room = manager.getRoom(current.roomCode);
         if (!room) throw new Error("Room not found.");
-        room.removeFromLobby(current.playerId);
+        room.leaveRoom(current.playerId);
         socket.leave(current.roomCode);
         session = null;
         manager.removeEmptyRoom(room);
