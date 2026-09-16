@@ -12,7 +12,7 @@ services:
       RESULT_SECONDS: ${RESULT_SECONDS:-3}
       ENABLE_DEBUG: "false"
     ports:
-      - "127.0.0.1:${HOST_PORT:-3000}:3000"
+      - "${HOST_PORT:-3000}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
