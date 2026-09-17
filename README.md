@@ -101,6 +101,8 @@ Animations are presentation only. They never advance or decide server state.
 
 The current declaration is illustrated with cards in the center of the table. Rank-only bids show all four suit symbols to mean any suit; the Royal Flush uses a single-suit example, not a claim about a specific hidden suit. Hand cards stay in portrait alignment, pointing toward the center. A challenge slides every revealed hand onto the gold ring and outlines the server-identified matching cards in green.
 
+The declaration builder uses clickable rank cards rather than dropdowns. Choose the combination, then click a rank. Full House has separate rows for the three-of-a-kind and pair; Two Pair has higher-pair and lower-pair rows. Straights are selected by their high card, with a five-card preview. Illegal raises and duplicate/incompatible ranks are disabled. On narrow screens each rank row scrolls horizontally, so Full House still has exactly two card rows.
+
 Every screen has a bottom-right version marker. GitHub Actions embeds the commit ID in the Docker build, so a deployed release reads, for example, `v0.2.0 · abcdef1`. Local builds show `local`. Compare the seven-character ID with the successful GitHub Actions run to confirm an update reached the browser.
 
 ## Docker deployment on a Linux VPS

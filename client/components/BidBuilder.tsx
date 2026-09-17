@@ -9,7 +9,9 @@ import {
   type BidCategory,
 } from "../../shared/game/bids";
 import type { PublicGameState } from "../../shared/game/types";
-import { FullHouseSelector, type FullHouseBid } from "./FullHouseSelector";
+import { BidRankPicker } from "./BidRankPicker";
+import { CardFace } from "./CardFace";
+import { getBidCards } from "../game3d/cards/cardPresentation";
 
 export function BidBuilder({ state, onClose, onSubmit, busy }: {
   state: PublicGameState;
@@ -44,7 +46,7 @@ export function BidBuilder({ state, onClose, onSubmit, busy }: {
           {physicallyPossible.map((candidate) => {
             const enabled = (grouped.get(candidate)?.length ?? 0) > 0;
             return (
-              <button key={candidate} disabled={!enabled} className={candidate === category ? "selected" : ""} onClick={() => { setCategory(candidate); setSelectedIndex(0); }}>
+              <button key={candidate} type="button" aria-pressed={candidate === category} disabled={busy || !enabled} className={candidate === category ? "selected" : ""} onClick={() => { setCategory(candidate); setSelectedIndex(0); }}>
                 <small>{BID_CATEGORIES.indexOf(candidate) + 1}</small>{CATEGORY_LABELS[candidate].en}
               </button>
             );
@@ -52,20 +54,12 @@ export function BidBuilder({ state, onClose, onSubmit, busy }: {
         </div>
         {selected ? (
           <>
-            {selected.type === "FULL_HOUSE" ? (
-              <FullHouseSelector
-                legalBids={options.filter((bid): bid is FullHouseBid => bid.type === "FULL_HOUSE")}
-                selected={selected}
-                onChange={(bid) => setSelectedIndex(options.indexOf(bid))}
-              />
-            ) : <label className="bid-choice">
-              <span>Choose the exact declaration</span>
-              <select value={selectedIndex} onChange={(event) => setSelectedIndex(Number(event.target.value))}>
-                {options.map((bid, index) => <option key={JSON.stringify(bid)} value={index}>{formatBid(bid)}</option>)}
-              </select>
-            </label>}
-            <div className="declaration-preview"><span>You are declaring</span><strong>{formatBid(selected)}</strong></div>
-            <button className="primary-button full-width" disabled={busy} onClick={() => onSubmit(selected)}>{busy ? "Declaring…" : `Declare ${formatBid(selected)}`}</button>
+            <BidRankPicker legalBids={options} selected={selected} onChange={(bid) => setSelectedIndex(options.indexOf(bid))} disabled={busy} />
+            <p className="rank-scroll-hint">Swipe the card rows to see more ranks →</p>
+            <div className="declaration-preview" aria-live="polite"><span>You are declaring</span><strong>{formatBid(selected)}</strong>
+              <div className="declaration-cards" aria-hidden="true">{getBidCards(selected).map((card, index) => <CardFace key={index} card={card} />)}</div>
+            </div>
+            <div className="builder-submit"><button className="primary-button full-width" disabled={busy} onClick={() => onSubmit(selected)}>{busy ? "Declaring…" : `Declare ${formatBid(selected)}`}</button></div>
           </>
         ) : (
           <p className="no-bids">There is no declaration above the current bid. Your only move is to call bluff.</p>
