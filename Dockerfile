@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+ARG BUILD_REVISION=local
+ENV VITE_BUILD_REVISION=$BUILD_REVISION
 RUN npm run build
 
 FROM node:20-alpine AS production

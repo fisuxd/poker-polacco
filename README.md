@@ -99,6 +99,10 @@ Their current implementations delegate to matching `Placeholder…` components. 
 
 Animations are presentation only. They never advance or decide server state.
 
+The current declaration is illustrated with cards in the center of the table. Rank-only bids show all four suit symbols to mean any suit; the Royal Flush uses a single-suit example, not a claim about a specific hidden suit. Hand cards stay in portrait alignment, pointing toward the center. A challenge slides every revealed hand onto the gold ring and outlines the server-identified matching cards in green.
+
+Every screen has a bottom-right version marker. GitHub Actions embeds the commit ID in the Docker build, so a deployed release reads, for example, `v0.2.0 · abcdef1`. Local builds show `local`. Compare the seven-character ID with the successful GitHub Actions run to confirm an update reached the browser.
+
 ## Docker deployment on a Linux VPS
 
 The provided multi-stage image builds the Vite client and Node server, installs only production dependencies in the final image, runs as the unprivileged `node` user, and serves the frontend and Socket.IO together on port 3000.

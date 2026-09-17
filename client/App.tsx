@@ -2,6 +2,7 @@ import { HomeScreen } from "./screens/HomeScreen";
 import { LobbyScreen } from "./screens/LobbyScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { useGameStore } from "./state/gameStore";
+import { VersionBadge } from "./components/VersionBadge";
 
 export default function App() {
   const publicState = useGameStore((state) => state.publicState);
@@ -18,6 +19,7 @@ export default function App() {
             : <GameScreen />}
       {connection === "disconnected" && <div className="offline-banner">Connection lost. Your seat is reserved for 60 seconds…</div>}
       {error && <div className="error-toast" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error">×</button></div>}
+      <VersionBadge />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { MeshStandardMaterial } from "three";
+import { REVEAL_RING_RADIUS } from "../cards/cardLayout";
 
 export function PlaceholderPokerTable({ active }: { active: boolean }) {
   const ringMaterial = useRef<MeshStandardMaterial>(null);
@@ -19,7 +20,7 @@ export function PlaceholderPokerTable({ active }: { active: boolean }) {
         <meshStandardMaterial color="#133d32" roughness={0.82} />
       </mesh>
       <mesh position={[0, 0.505, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.02, 1.07, 64]} />
+        <ringGeometry args={[REVEAL_RING_RADIUS - 0.025, REVEAL_RING_RADIUS + 0.025, 96]} />
         <meshStandardMaterial ref={ringMaterial} color="#c7974c" emissive="#d99639" emissiveIntensity={0.1} />
       </mesh>
       <mesh position={[0, -0.12, 0]} castShadow><cylinderGeometry args={[1.1, 1.45, 0.8, 32]} /><meshStandardMaterial color="#19100d" /></mesh>

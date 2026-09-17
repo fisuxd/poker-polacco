@@ -78,7 +78,7 @@ export function GameScreen() {
         ))}
       </aside>
 
-      <section className={`bid-display ${state.result ? "has-result" : ""}`}>
+      <section className="sr-only" aria-label="Current declaration" aria-live="polite">
         {state.result && (state.phase === "REVEAL" || state.phase === "ROUND_RESULT") ? (
           <>
             <p className="eyebrow">Challenge result</p>
